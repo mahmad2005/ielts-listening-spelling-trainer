@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Manrope, 'Segoe UI', sans-serif;
+  line-height: 1.45;
+  font-weight: 400;
+  color: #0f172a;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.24), transparent 36%),
+    radial-gradient(circle at 85% 0%, rgba(244, 114, 182, 0.22), transparent 30%),
+    linear-gradient(160deg, #e2f3ff 0%, #f8fafc 55%, #fef3c7 100%);
+}
+
+h1,
+h2,
+h3 {
+  font-family: Sora, 'Trebuchet MS', sans-serif;
+}
