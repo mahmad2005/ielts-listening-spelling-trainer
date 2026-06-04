@@ -164,7 +164,7 @@ export function Results() {
         </Link>
 
         <Link
-          to="/"
+          to="/home"
           className="rounded-lg border border-cyan-300 bg-cyan-50 px-4 py-2 font-semibold text-cyan-800 transition hover:border-cyan-400"
         >
           Home

@@ -1,37 +1,13 @@
 import { normalizeAnswer } from './normalizeAnswer'
 import type {
   FavouriteWordRecord,
+  ProfileData,
   PracticeResult,
   PracticeSettings,
   WeakWordRecord,
+  WordStatRecord,
 } from '../types'
-
-const SETTINGS_KEY = 'ielts.spell.settings'
-const WEAK_WORDS_KEY = 'ielts.spell.weakWords'
-const FAVOURITE_WORDS_KEY = 'ielts.spell.favourites'
-const LATEST_RESULT_KEY = 'ielts.spell.latestResult'
-const VOICE_URI_KEY = 'ielts.spell.voiceURI'
-
-function readJSON<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key)
-    if (!raw) {
-      return fallback
-    }
-
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
-}
-
-function writeJSON<T>(key: string, data: T): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(data))
-  } catch {
-    // Ignore write failures (e.g. storage quota or privacy mode restrictions).
-  }
-}
+import { getActiveProfile, getActiveProfileData, updateActiveProfileData } from './profileStorage'
 
 export function makeWeakWordKey(section: string, word: string): string {
   return `${normalizeAnswer(section)}::${normalizeAnswer(word)}`
@@ -58,25 +34,73 @@ function toWeakWordRecord(record: Partial<WeakWordRecord> & Pick<WeakWordRecord,
   }
 }
 
+function updateCurrentProfile(mutator: (current: ProfileData) => ProfileData): void {
+  updateActiveProfileData(mutator)
+}
+
+function buildWordStats(records: PracticeResult['records'], currentStats: Record<string, WordStatRecord>): Record<string, WordStatRecord> {
+  const nextStats = { ...currentStats }
+  const practicedAt = new Date().toISOString()
+
+  records.forEach((record) => {
+    const key = makeWeakWordKey(record.section, record.correctWord)
+    const existing = nextStats[key] ?? {
+      key,
+      section: record.section,
+      word: record.correctWord,
+      attempts: 0,
+      correctCount: 0,
+      wrongCount: 0,
+      timeoutCount: 0,
+      lastPracticedAt: practicedAt,
+    }
+
+    nextStats[key] = {
+      ...existing,
+      attempts: existing.attempts + 1,
+      correctCount: existing.correctCount + (record.result === 'correct' ? 1 : 0),
+      wrongCount: existing.wrongCount + (record.result === 'wrong' ? 1 : 0),
+      timeoutCount: existing.timeoutCount + (record.result === 'timeout' ? 1 : 0),
+      lastPracticedAt: practicedAt,
+    }
+  })
+
+  return nextStats
+}
+
+export interface ProfileDashboardStats {
+  profileName: string
+  totalSessions: number
+  weakWordCount: number
+  lastScore: number | null
+  bestScore: number | null
+  accuracy: number
+}
+
 export function getSavedSettings(): PracticeSettings | null {
-  return readJSON<PracticeSettings | null>(SETTINGS_KEY, null)
+  return getActiveProfileData().settings
 }
 
 export function saveSettings(settings: PracticeSettings): void {
-  writeJSON(SETTINGS_KEY, settings)
+  updateCurrentProfile((current) => ({
+    ...current,
+    settings,
+  }))
 }
 
 export function getWeakWords(): WeakWordRecord[] {
-  const raw = readJSON<Array<Partial<WeakWordRecord> & Pick<WeakWordRecord, 'key' | 'section' | 'word'>>>(
-    WEAK_WORDS_KEY,
-    [],
-  )
+  const raw = getActiveProfileData().weakWords as Array<
+    Partial<WeakWordRecord> & Pick<WeakWordRecord, 'key' | 'section' | 'word'>
+  >
 
   return raw.map((record) => toWeakWordRecord(record))
 }
 
 export function saveWeakWords(records: WeakWordRecord[]): void {
-  writeJSON(WEAK_WORDS_KEY, records)
+  updateCurrentProfile((current) => ({
+    ...current,
+    weakWords: records,
+  }))
 }
 
 export function addWeakWordManually(section: string, word: string): void {
@@ -191,11 +215,14 @@ export function updateWeakWordProgress(
 }
 
 export function getFavouriteWords(): FavouriteWordRecord[] {
-  return readJSON<FavouriteWordRecord[]>(FAVOURITE_WORDS_KEY, [])
+  return getActiveProfileData().favourites
 }
 
 export function saveFavouriteWords(records: FavouriteWordRecord[]): void {
-  writeJSON(FAVOURITE_WORDS_KEY, records)
+  updateCurrentProfile((current) => ({
+    ...current,
+    favourites: records,
+  }))
 }
 
 export function toggleFavouriteWord(section: string, word: string): void {
@@ -219,17 +246,57 @@ export function toggleFavouriteWord(section: string, word: string): void {
 }
 
 export function saveSelectedVoiceURI(voiceURI: string): void {
-  writeJSON(VOICE_URI_KEY, voiceURI)
+  const currentSettings = getSavedSettings()
+  if (!currentSettings) {
+    return
+  }
+
+  saveSettings({
+    ...currentSettings,
+    voiceURI,
+  })
 }
 
 export function getSavedVoiceURI(): string {
-  return readJSON<string>(VOICE_URI_KEY, '')
+  return getSavedSettings()?.voiceURI ?? ''
 }
 
 export function saveLatestResult(result: PracticeResult): void {
-  writeJSON(LATEST_RESULT_KEY, result)
+  updateCurrentProfile((current) => ({
+    ...current,
+    resultHistory: [...current.resultHistory, result],
+    wordStats: buildWordStats(result.records, current.wordStats),
+  }))
 }
 
 export function getLatestResult(): PracticeResult | null {
-  return readJSON<PracticeResult | null>(LATEST_RESULT_KEY, null)
+  const history = getActiveProfileData().resultHistory
+  return history.at(-1) ?? null
+}
+
+export function getResultHistory(): PracticeResult[] {
+  return getActiveProfileData().resultHistory
+}
+
+export function getProfileDashboardStats(): ProfileDashboardStats {
+  const activeProfile = getActiveProfile()
+  const data = getActiveProfileData()
+  const resultHistory = data.resultHistory
+  const allRecords = resultHistory.flatMap((result) => result.records)
+  const correctCount = allRecords.filter((record) => record.result === 'correct').length
+  const accuracy = allRecords.length > 0 ? (correctCount / allRecords.length) * 100 : 0
+  const lastScore = resultHistory.at(-1)?.totalScore ?? null
+  const bestScore =
+    resultHistory.length > 0
+      ? resultHistory.reduce((best, result) => Math.max(best, result.totalScore), resultHistory[0].totalScore)
+      : null
+
+  return {
+    profileName: activeProfile?.name ?? 'Guest',
+    totalSessions: resultHistory.length,
+    weakWordCount: data.weakWords.length,
+    lastScore,
+    bestScore,
+    accuracy,
+  }
 }

@@ -57,6 +57,32 @@ export interface FavouriteWordRecord {
   createdAt: string
 }
 
+export interface WordStatRecord {
+  key: string
+  section: string
+  word: string
+  attempts: number
+  correctCount: number
+  wrongCount: number
+  timeoutCount: number
+  lastPracticedAt: string
+}
+
+export interface UserProfile {
+  id: string
+  name: string
+  createdAt: string
+  lastActiveAt: string
+}
+
+export interface ProfileData {
+  settings: PracticeSettings | null
+  weakWords: WeakWordRecord[]
+  resultHistory: PracticeResult[]
+  wordStats: Record<string, WordStatRecord>
+  favourites: FavouriteWordRecord[]
+}
+
 export interface PracticeResult {
   settings: PracticeSettings
   records: AnswerRecord[]

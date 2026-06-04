@@ -90,7 +90,7 @@ export function WordLibrary() {
             Setup
           </Link>
           <Link
-            to="/"
+            to="/home"
             className="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-800 transition hover:border-cyan-400"
           >
             Home

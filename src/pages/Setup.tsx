@@ -121,7 +121,7 @@ export function Setup() {
           <Link to="/library" className="text-emerald-700 hover:text-emerald-900">
             Word Library
           </Link>
-          <Link to="/" className="text-cyan-700 hover:text-cyan-900">
+          <Link to="/home" className="text-cyan-700 hover:text-cyan-900">
             Back Home
           </Link>
         </div>
