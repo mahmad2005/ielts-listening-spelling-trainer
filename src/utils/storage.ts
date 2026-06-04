@@ -271,6 +271,40 @@ export function removeWeakWord(section: string, word: string): void {
   saveWeakWords(next)
 }
 
+export function resetWordProgress(section: string, word: string): void {
+  const key = makeWeakWordKey(section, word)
+
+  updateCurrentProfile((current) => {
+    const normalizedStats = normalizeWordStats(current.wordStats)
+    const nextWordStats = { ...normalizedStats }
+    delete nextWordStats[key]
+
+    const nextWeakWords = current.weakWords.map((record) => {
+      if (record.key !== key) {
+        return record
+      }
+
+      return {
+        ...record,
+        practiceCount: 0,
+        correctCount: 0,
+        wrongCount: 0,
+        timeoutCount: 0,
+        averageResponseTimeMs: 0,
+        correctStreak: 0,
+        lastPracticedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    })
+
+    return {
+      ...current,
+      weakWords: nextWeakWords,
+      wordStats: nextWordStats,
+    }
+  })
+}
+
 export function updateWeakWordProgress(
   section: string,
   word: string,

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { AppHeader } from '../components/AppHeader'
 import { ModeSelector } from '../components/ModeSelector'
 import { SectionSelector } from '../components/SectionSelector'
 import { VoiceSelector } from '../components/VoiceSelector'
@@ -130,20 +131,14 @@ export function Setup() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-3xl font-black text-slate-900">Practice Setup</h1>
-        <div className="flex items-center gap-4 text-sm font-semibold">
-          <Link to="/library" className="text-emerald-700 hover:text-emerald-900">
-            Word Library
-          </Link>
-          <Link to="/home" className="text-cyan-700 hover:text-cyan-900">
-            Back Home
-          </Link>
+    <>
+      <AppHeader />
+      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+        <div className="mb-6">
+          <h1 className="text-3xl font-black text-slate-900">Practice Setup</h1>
         </div>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
         <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">Mode</h2>
           <ModeSelector
@@ -268,7 +263,8 @@ export function Setup() {
             Start
           </button>
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   )
 }

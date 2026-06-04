@@ -1,19 +1,58 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AppHeader } from '../components/AppHeader'
 import { ProfileSwitcher } from '../components/ProfileSwitcher'
-import { getProfileDashboardStats } from '../utils/storage'
+import type { PracticeSettings, WordSection } from '../types'
+import { getProfileDashboardStats, getSavedSettings, getWeakWords } from '../utils/storage'
+import { buildPracticeItems } from '../utils/wordSelector'
 import wordsData from '../data/words.json'
-import type { WordSection } from '../types'
 
 const sections = wordsData as WordSection[]
 
+const defaultSettings: PracticeSettings = {
+  mode: 'weak-only',
+  section: sections[0]?.section ?? '',
+  questionCount: 20,
+  timeLimitSec: 15,
+  voiceRate: 0.85,
+  voiceURI: '',
+  language: 'en-CA',
+}
+
 export function Home() {
+  const navigate = useNavigate()
   const totalWords = sections.reduce((total, section) => total + section.words.length, 0)
   const stats = getProfileDashboardStats(totalWords)
   const averageResponseSeconds = stats.averageResponseTimeMs / 1000
+  const [reviewError, setReviewError] = useState('')
+
+  const practiceReviewWords = () => {
+    const settings: PracticeSettings = {
+      ...defaultSettings,
+      ...(getSavedSettings() ?? {}),
+      mode: 'weak-only',
+    }
+    const selected = buildPracticeItems(sections, settings, getWeakWords())
+
+    if (selected.length === 0) {
+      setReviewError('No review words are scheduled yet. Start a practice session first.')
+      return
+    }
+
+    setReviewError('')
+    navigate('/practice', {
+      state: {
+        settings,
+        items: selected,
+      },
+    })
+  }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-10">
-      <div className="w-full rounded-3xl border border-cyan-100 bg-white/80 p-8 shadow-2xl shadow-cyan-100 backdrop-blur sm:p-10">
+    <>
+      <AppHeader />
+      <main className="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-5xl items-center px-4 py-10">
+        <div className="w-full rounded-3xl border border-cyan-100 bg-white/80 p-8 shadow-2xl shadow-cyan-100 backdrop-blur sm:p-10">
         <p className="mb-3 inline-flex rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-700">
           IELTS SpellSprint
         </p>
@@ -35,7 +74,7 @@ export function Home() {
           <MetricCard title="Total Words" value={`${stats.totalWords}`} accent="slate" />
           <MetricCard title="Practiced Words" value={`${stats.practicedWords}`} accent="cyan" />
           <MetricCard title="New Words" value={`${stats.newWords}`} accent="emerald" />
-          <MetricCard title="Weak Words" value={`${stats.weakWords}`} accent="amber" />
+          <MetricCard title="Currently Weak" value={`${stats.weakWords}`} accent="amber" />
           <MetricCard title="Strong Words" value={`${stats.strongWords}`} accent="emerald" />
           <MetricCard title="Mastered Words" value={`${stats.masteredWords}`} accent="cyan" />
           <MetricCard title="Accuracy" value={`${stats.accuracy.toFixed(1)}%`} accent="rose" />
@@ -56,7 +95,16 @@ export function Home() {
             value={stats.bestScore === null ? 'No sessions yet' : `${stats.bestScore}`}
             accent="cyan"
           />
-          <MetricCard title="Weak Review Queue" value={`${stats.weakReviewQueueCount}`} accent="amber" />
+          <MetricCard title="Words Due for Review" value={`${stats.weakReviewQueueCount}`} accent="amber" />
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/80 px-4 py-3 text-sm text-cyan-900">
+          <p>
+            <span className="font-semibold">Currently Weak:</span> words with weak status caused by wrong answers, timeout, or low accuracy.
+          </p>
+          <p>
+            <span className="font-semibold">Words Due for Review:</span> all words currently scheduled for weak-word or revision practice.
+          </p>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-4">
@@ -73,13 +121,20 @@ export function Home() {
             Word Library
           </Link>
           <Link
-            to="/setup"
-            state={{ presetMode: 'weak-only' }}
+            to="/weak-words"
             className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-lg font-semibold text-slate-700 transition hover:border-cyan-400 hover:text-cyan-700"
           >
-            Weak Words ({stats.weakReviewQueueCount})
+            View Weak Words
           </Link>
+          <button
+            type="button"
+            onClick={practiceReviewWords}
+            className="rounded-xl border border-amber-300 bg-amber-50 px-6 py-3 text-lg font-semibold text-amber-900 transition hover:border-amber-400"
+          >
+            Practice Review Words
+          </button>
         </div>
+        {reviewError && <p className="mt-3 text-sm font-semibold text-rose-700">{reviewError}</p>}
 
         <section className="mt-10">
           <h2 className="text-2xl font-black text-slate-900">How it works</h2>
@@ -101,8 +156,9 @@ export function Home() {
             />
           </div>
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   )
 }
 

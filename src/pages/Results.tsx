@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { AppHeader } from '../components/AppHeader'
 import { ResultTable } from '../components/ResultTable'
 import type { PracticeResult } from '../types'
 import { getLatestResult } from '../utils/storage'
@@ -17,14 +18,17 @@ export function Results() {
 
   if (!result) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-700">No results available yet.</p>
-          <Link to="/setup" className="mt-4 inline-block text-cyan-700 hover:text-cyan-900">
-            Start a practice session
-          </Link>
-        </div>
-      </main>
+      <>
+        <AppHeader />
+        <main className="mx-auto max-w-3xl px-4 py-10">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <p className="text-slate-700">No results available yet.</p>
+            <Link to="/setup" className="mt-4 inline-block text-cyan-700 hover:text-cyan-900">
+              Start a practice session
+            </Link>
+          </div>
+        </main>
+      </>
     )
   }
 
@@ -87,19 +91,21 @@ export function Results() {
     .slice(0, 8)
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8">
-      <h1 className="mb-5 text-3xl font-black text-slate-900">Results</h1>
+    <>
+      <AppHeader />
+      <main className="mx-auto w-full max-w-6xl px-4 py-8">
+        <h1 className="mb-5 text-3xl font-black text-slate-900">Results</h1>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <MetricCard title="Total score" value={`${result.totalScore}`} />
         <MetricCard title="Correct" value={`${correctCount}`} />
         <MetricCard title="Wrong" value={`${wrongCount}`} />
         <MetricCard title="Timeout" value={`${timeoutCount}`} />
         <MetricCard title="Avg response" value={`${(averageTimeMs / 1000).toFixed(2)}s`} />
         <MetricCard title="Accuracy" value={`${accuracy.toFixed(1)}%`} />
-      </div>
+        </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900">Weakest sections</h2>
           {weakestSections.length === 0 ? (
@@ -136,11 +142,11 @@ export function Results() {
             </ul>
           )}
         </div>
-      </div>
+        </div>
 
-      <ResultTable records={result.records} settings={result.settings} />
+        <ResultTable records={result.records} settings={result.settings} />
 
-      <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
         <button
           type="button"
           onClick={() => navigate('/setup', { state: { presetMode: 'weak-only' } })}
@@ -169,8 +175,9 @@ export function Results() {
         >
           Home
         </Link>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   )
 }
 

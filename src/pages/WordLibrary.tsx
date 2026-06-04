@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { AppHeader } from '../components/AppHeader'
 import wordsData from '../data/words.json'
 import type { PracticeSettings, WordSection, WordStatus } from '../types'
 import {
@@ -99,32 +99,19 @@ export function WordLibrary() {
   }, [allWords, wordStatsMap])
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900">Word Library</h1>
-          <p className="text-sm text-slate-600">
-            Browse sections, listen to words, and curate favourites + weak words.
-          </p>
+    <>
+      <AppHeader />
+      <main className="mx-auto w-full max-w-6xl px-4 py-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900">Word Library</h1>
+            <p className="text-sm text-slate-600">
+              Browse sections, listen to words, and curate favourites + weak words.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link
-            to="/setup"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
-          >
-            Setup
-          </Link>
-          <Link
-            to="/home"
-            className="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-sm font-semibold text-cyan-800 transition hover:border-cyan-400"
-          >
-            Home
-          </Link>
-        </div>
-      </div>
-
-      <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr,200px,180px,auto]">
+        <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr,200px,180px,auto]">
         <input
           type="text"
           value={search}
@@ -170,9 +157,9 @@ export function WordLibrary() {
         >
           {showOnlyFavourites ? 'Showing favourites only' : 'Show favourites only'}
         </button>
-      </div>
+        </div>
 
-      <div className="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <div className="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
         <p>Total words: {allWords.length}</p>
         <p>Filtered words: {filteredWords.length}</p>
         <p>
@@ -181,9 +168,9 @@ export function WordLibrary() {
         </p>
         <p>Favourites: {favouriteKeys.size}</p>
         <p>Weak words tracked: {weakKeys.size}</p>
-      </div>
+        </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-100 text-slate-700">
@@ -278,8 +265,9 @@ export function WordLibrary() {
             </tbody>
           </table>
         </div>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   )
 }
 

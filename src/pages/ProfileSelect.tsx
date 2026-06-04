@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AppHeader } from '../components/AppHeader'
 import type { UserProfile } from '../types'
 import {
   createProfile,
@@ -77,8 +78,10 @@ export function ProfileSelect() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-10">
-      <div className="grid w-full gap-6 lg:grid-cols-[0.92fr,1.08fr]">
+    <>
+      <AppHeader />
+      <main className="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-5xl items-center px-4 py-10">
+        <div className="grid w-full gap-6 lg:grid-cols-[0.92fr,1.08fr]">
         <section className="rounded-3xl border border-cyan-100 bg-white/80 p-8 shadow-2xl shadow-cyan-100 backdrop-blur sm:p-10">
           <p className="mb-3 inline-flex rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-700">
             IELTS SpellSprint
@@ -226,7 +229,8 @@ export function ProfileSelect() {
             </div>
           )}
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   )
 }
