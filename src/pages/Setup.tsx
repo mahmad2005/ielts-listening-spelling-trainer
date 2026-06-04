@@ -12,7 +12,7 @@ import {
   saveSelectedVoiceURI,
   saveSettings,
 } from '../utils/storage'
-import { loadVoices } from '../utils/tts'
+import { loadVoices, speakText } from '../utils/tts'
 import { validateWordSections } from '../utils/wordValidation'
 import { buildPracticeItems } from '../utils/wordSelector'
 
@@ -44,6 +44,7 @@ export function Setup() {
   })
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
   const [error, setError] = useState('')
+  const [soundMessage, setSoundMessage] = useState('')
   const validationReport = useMemo(() => validateWordSections(sections), [])
 
   useEffect(() => {
@@ -111,6 +112,21 @@ export function Setup() {
         items: selected,
       },
     })
+  }
+
+  const testSound = async () => {
+    setError('')
+    setSoundMessage('')
+
+    const started = await speakText('Sound is working', {
+      voiceURI: settings.voiceURI,
+      rate: settings.voiceRate,
+      lang: settings.language,
+    })
+
+    if (!started) {
+      setSoundMessage('Audio could not start. Please turn off silent mode, increase volume, and tap Test Sound.')
+    }
   }
 
   return (
@@ -219,6 +235,22 @@ export function Setup() {
               }))
             }}
           />
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <button
+              type="button"
+              onClick={() => {
+                void testSound()
+              }}
+              className="rounded-lg border border-emerald-500 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+            >
+              Test Sound
+            </button>
+            <p className="mt-2 text-xs text-slate-600">
+              On iPhone, sound must be enabled by tapping the button first. Also check Silent Mode and volume.
+            </p>
+            {soundMessage && <p className="mt-2 text-sm font-semibold text-rose-700">{soundMessage}</p>}
+          </div>
 
           <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
             <p>Total words loaded: {totalWordCount}</p>

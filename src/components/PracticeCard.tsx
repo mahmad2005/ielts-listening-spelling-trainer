@@ -6,6 +6,7 @@ interface PracticeCardProps {
   onAnswerChange: (value: string) => void
   onSubmit: () => void
   onReplay: () => void
+  onTestSound: () => void
   repeatsUsed: number
   feedback: { status: 'correct' | 'wrong' | 'timeout'; correctWord: string } | null
   focusSignal: number
@@ -17,6 +18,7 @@ export function PracticeCard({
   onAnswerChange,
   onSubmit,
   onReplay,
+  onTestSound,
   repeatsUsed,
   feedback,
   focusSignal,
@@ -40,14 +42,23 @@ export function PracticeCard({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-medium text-slate-600">Auto repeats used: {repeatsUsed}/2</p>
-          <button
-            type="button"
-            onClick={onReplay}
-            disabled={disabled}
-            className="rounded-lg border border-cyan-500 px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Replay (Ctrl + R)
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={onTestSound}
+              className="rounded-lg border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+            >
+              Test Sound
+            </button>
+            <button
+              type="button"
+              onClick={onReplay}
+              disabled={disabled}
+              className="rounded-lg border border-cyan-500 px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Replay (Ctrl + R)
+            </button>
+          </div>
         </div>
 
         <input

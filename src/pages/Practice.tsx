@@ -32,6 +32,8 @@ export function Practice() {
     correctWord: string
   } | null>(null)
   const [locked, setLocked] = useState(false)
+  const [audioUnlocked, setAudioUnlocked] = useState(false)
+  const [audioWarning, setAudioWarning] = useState('')
 
   const answerRef = useRef('')
   const scoreRef = useRef(0)
@@ -42,6 +44,7 @@ export function Practice() {
   const timerHandles = useRef<number[]>([])
   const tickHandle = useRef<number | null>(null)
   const transitionHandle = useRef<number | null>(null)
+  const initialSpeakHandle = useRef<number | null>(null)
   const startedAtRef = useRef(0)
 
   const totalMs = (settings?.timeLimitSec ?? 10) * 1000
@@ -84,6 +87,13 @@ export function Practice() {
     }
   }, [])
 
+  const clearInitialSpeakTimer = useCallback(() => {
+    if (initialSpeakHandle.current !== null) {
+      window.clearTimeout(initialSpeakHandle.current)
+      initialSpeakHandle.current = null
+    }
+  }, [])
+
   const moveNext = useCallback(
     (nextRecords: AnswerRecord[], nextScore: number, delayMs: number) => {
       lockedRef.current = true
@@ -113,10 +123,10 @@ export function Practice() {
   const replayCurrentWord = useCallback(
     (repeatIndex = repeatCountRef.current) => {
       if (!currentItem || !settings || lockedRef.current) {
-        return
+        return Promise.resolve(false)
       }
 
-      speakText(currentItem.word, {
+      return speakText(currentItem.word, {
         voiceURI: settings.voiceURI,
         rate: getRateForRepeat(repeatIndex),
         lang: settings.language,
@@ -192,9 +202,19 @@ export function Practice() {
       return
     }
 
+    if (!audioUnlocked) {
+      clearQuestionTimers()
+      clearTransitionTimer()
+      clearInitialSpeakTimer()
+      cancelSpeech()
+      return
+    }
+
     clearTransitionTimer()
     clearQuestionTimers()
+    clearInitialSpeakTimer()
     cancelSpeech()
+    setAudioWarning('')
 
     answerRef.current = ''
     setAnswer('')
@@ -206,7 +226,13 @@ export function Practice() {
     setRemainingMs(totalMs)
     startedAtRef.current = performance.now()
 
-    replayCurrentWord(0)
+    initialSpeakHandle.current = window.setTimeout(() => {
+      void replayCurrentWord(0).then((started) => {
+        if (!started) {
+          setAudioWarning('Audio could not start. Please turn off silent mode, increase volume, and tap Test Sound.')
+        }
+      })
+    }, 200)
 
     const stepMs = totalMs / 3
     timerHandles.current.push(
@@ -242,8 +268,10 @@ export function Practice() {
   }, [
     clearQuestionTimers,
     clearTransitionTimer,
+    clearInitialSpeakTimer,
     currentItem,
     finalizeQuestion,
+    audioUnlocked,
     index,
     items.length,
     navigate,
@@ -276,9 +304,27 @@ export function Practice() {
     return () => {
       clearQuestionTimers()
       clearTransitionTimer()
+      clearInitialSpeakTimer()
       cancelSpeech()
     }
-  }, [clearQuestionTimers, clearTransitionTimer])
+  }, [clearInitialSpeakTimer, clearQuestionTimers, clearTransitionTimer])
+
+  const unlockAudio = useCallback(async () => {
+    setAudioWarning('')
+    cancelSpeech()
+
+    const started = await speakText('Ready', {
+      voiceURI: settings?.voiceURI,
+      rate: settings?.voiceRate,
+      lang: settings?.language,
+    })
+
+    if (!started) {
+      setAudioWarning('Audio could not start. Please turn off silent mode, increase volume, and tap Test Sound.')
+    }
+
+    setAudioUnlocked(true)
+  }, [settings])
 
   const helperText = useMemo(
     () =>
@@ -290,6 +336,52 @@ export function Practice() {
 
   if (!settings || items.length === 0 || !currentItem) {
     return null
+  }
+
+  if (!audioUnlocked) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-4xl items-center px-4 py-8">
+        <div className="mx-auto w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-2xl shadow-slate-200/70">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-cyan-700">Enable Sound</p>
+          <h1 className="text-3xl font-black text-slate-900">Enable Sound</h1>
+          <p className="mt-4 text-base text-slate-600">
+            Tap the button below to enable IELTS SpellSprint audio on this device.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                void unlockAudio()
+              }}
+              className="rounded-xl bg-emerald-600 px-6 py-3 text-lg font-bold text-white transition hover:bg-emerald-700"
+            >
+              Tap to Enable Sound
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void speakText('Sound is working', {
+                  voiceURI: settings.voiceURI,
+                  rate: settings.voiceRate,
+                  lang: settings.language,
+                }).then((started) => {
+                  if (!started) {
+                    setAudioWarning('Audio could not start. Please turn off silent mode, increase volume, and tap Test Sound.')
+                  }
+                })
+              }}
+              className="rounded-xl border border-emerald-500 bg-white px-6 py-3 text-lg font-bold text-emerald-700 transition hover:bg-emerald-50"
+            >
+              Test Sound
+            </button>
+          </div>
+          <p className="mt-4 text-sm text-slate-600">
+            On iPhone, sound must be enabled by tapping the button first. Also check Silent Mode and volume.
+          </p>
+          {audioWarning && <p className="mt-4 text-sm font-semibold text-rose-700">{audioWarning}</p>}
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -311,6 +403,17 @@ export function Practice() {
           onAnswerChange={handleAnswerChange}
           onSubmit={submitAnswer}
           onReplay={replayCurrentWord}
+          onTestSound={() => {
+            void speakText('Sound is working', {
+              voiceURI: settings.voiceURI,
+              rate: settings.voiceRate,
+              lang: settings.language,
+            }).then((started) => {
+              if (!started) {
+                setAudioWarning('Audio could not start. Please turn off silent mode, increase volume, and tap Test Sound.')
+              }
+            })
+          }}
           repeatsUsed={repeatCount}
           feedback={feedback}
           focusSignal={index}
@@ -318,6 +421,7 @@ export function Practice() {
         />
 
         <p className="text-sm text-slate-600">{helperText}</p>
+        {audioWarning && <p className="text-sm font-semibold text-rose-700">{audioWarning}</p>}
       </div>
     </main>
   )

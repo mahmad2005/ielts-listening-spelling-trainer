@@ -81,13 +81,19 @@ export function ProfileSelect() {
       <div className="grid w-full gap-6 lg:grid-cols-[0.92fr,1.08fr]">
         <section className="rounded-3xl border border-cyan-100 bg-white/80 p-8 shadow-2xl shadow-cyan-100 backdrop-blur sm:p-10">
           <p className="mb-3 inline-flex rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-700">
-            Local User Profiles
+            IELTS SpellSprint
+          </p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">
+            IELTS Listening Spelling Trainer
           </p>
           <h1 className="text-4xl font-black leading-tight text-slate-900 sm:text-5xl">
             Choose who is practicing today.
           </h1>
           <p className="mt-5 text-lg text-slate-600">
-            Each profile keeps its own settings, weak words, favourites, and results locally in your browser.
+            Each profile keeps separate IELTS spelling progress, weak words, mastered words, favourites, and practice history on this browser.
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            Profiles are local browser profiles only, not online accounts.
           </p>
 
           <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4">

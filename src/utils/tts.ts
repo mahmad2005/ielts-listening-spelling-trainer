@@ -4,8 +4,38 @@ export interface SpeakOptions {
   lang?: string
 }
 
+const DEFAULT_TTS_LANG = 'en-CA'
+const VOICE_FALLBACK_ORDER = ['en-CA', 'en-GB', 'en-US']
+
+function isSpeechSynthesisSupported(): boolean {
+  return typeof window !== 'undefined' && Boolean(window.speechSynthesis)
+}
+
+function getVoiceByLanguagePrefix(voices: SpeechSynthesisVoice[], prefix: string): SpeechSynthesisVoice | undefined {
+  const lowerPrefix = prefix.toLowerCase()
+  return voices.find((voice) => voice.lang.toLowerCase().startsWith(lowerPrefix))
+}
+
+function resolveVoice(voices: SpeechSynthesisVoice[], options: SpeakOptions): SpeechSynthesisVoice | undefined {
+  if (options.voiceURI) {
+    const selectedVoice = voices.find((voice) => voice.voiceURI === options.voiceURI)
+    if (selectedVoice) {
+      return selectedVoice
+    }
+  }
+
+  for (const language of VOICE_FALLBACK_ORDER) {
+    const voice = getVoiceByLanguagePrefix(voices, language)
+    if (voice) {
+      return voice
+    }
+  }
+
+  return voices.find((voice) => voice.lang.toLowerCase().startsWith('en')) ?? voices.find((voice) => voice.default) ?? voices[0]
+}
+
 export function cancelSpeech(): void {
-  if (typeof window === 'undefined' || !window.speechSynthesis) {
+  if (!isSpeechSynthesisSupported()) {
     return
   }
 
@@ -13,7 +43,7 @@ export function cancelSpeech(): void {
 }
 
 export function getVoices(): SpeechSynthesisVoice[] {
-  if (typeof window === 'undefined' || !window.speechSynthesis) {
+  if (!isSpeechSynthesisSupported()) {
     return []
   }
 
@@ -22,7 +52,7 @@ export function getVoices(): SpeechSynthesisVoice[] {
 
 export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
+    if (!isSpeechSynthesisSupported()) {
       resolve([])
       return
     }
@@ -33,32 +63,88 @@ export function loadVoices(): Promise<SpeechSynthesisVoice[]> {
       return
     }
 
-    const handleVoicesChanged = () => {
+    let settled = false
+    let timeoutId: number | null = null
+
+    const finish = () => {
+      if (settled) {
+        return
+      }
+
+      settled = true
       window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged)
+
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId)
+      }
+
       resolve(getVoices())
     }
 
+    const handleVoicesChanged = () => {
+      finish()
+    }
+
     window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged)
+
+    timeoutId = window.setTimeout(() => {
+      finish()
+    }, 1500)
   })
 }
 
-export function speakText(text: string, options: SpeakOptions = {}): void {
-  if (typeof window === 'undefined' || !window.speechSynthesis || !text.trim()) {
-    return
+export async function speakText(text: string, options: SpeakOptions = {}): Promise<boolean> {
+  if (!isSpeechSynthesisSupported() || !text.trim()) {
+    return false
   }
 
   cancelSpeech()
 
   const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = options.lang ?? 'en-CA'
+  const voices = await loadVoices()
+  const selectedVoice = resolveVoice(voices, options)
+
+  utterance.lang = options.lang ?? selectedVoice?.lang ?? DEFAULT_TTS_LANG
   utterance.rate = options.rate ?? 0.85
 
-  if (options.voiceURI) {
-    const voice = getVoices().find((item) => item.voiceURI === options.voiceURI)
-    if (voice) {
-      utterance.voice = voice
-    }
+  if (selectedVoice) {
+    utterance.voice = selectedVoice
+    utterance.lang = selectedVoice.lang || utterance.lang
   }
 
-  window.speechSynthesis.speak(utterance)
+  return await new Promise<boolean>((resolve) => {
+    let settled = false
+
+    const finish = (started: boolean) => {
+      if (settled) {
+        return
+      }
+
+      settled = true
+      utterance.onstart = null
+      utterance.onend = null
+      utterance.onerror = null
+      resolve(started)
+    }
+
+    utterance.onstart = () => {
+      finish(true)
+    }
+
+    utterance.onend = () => {
+      if (!settled) {
+        finish(true)
+      }
+    }
+
+    utterance.onerror = () => {
+      finish(false)
+    }
+
+    try {
+      window.speechSynthesis.speak(utterance)
+    } catch {
+      finish(false)
+    }
+  })
 }

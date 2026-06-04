@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import wordsData from '../data/words.json'
-import type { PracticeSettings, WordSection } from '../types'
+import type { PracticeSettings, WordSection, WordStatus } from '../types'
 import {
   addWeakWordManually,
   getFavouriteWords,
   getSavedSettings,
+  getWordStatsMap,
   getWeakWords,
   makeWeakWordKey,
   removeWeakWord,
@@ -24,11 +25,13 @@ const fallbackSettings: Pick<PracticeSettings, 'voiceURI' | 'voiceRate' | 'langu
 export function WordLibrary() {
   const [search, setSearch] = useState('')
   const [sectionFilter, setSectionFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | WordStatus>('all')
   const [showOnlyFavourites, setShowOnlyFavourites] = useState(false)
   const [weakKeys, setWeakKeys] = useState(() => new Set(getWeakWords().map((item) => item.key)))
   const [favouriteKeys, setFavouriteKeys] = useState(
     () => new Set(getFavouriteWords().map((item) => item.key)),
   )
+  const [wordStatsMap, setWordStatsMap] = useState(() => getWordStatsMap())
 
   const savedSettings = getSavedSettings()
   const speechSettings = {
@@ -53,7 +56,13 @@ export function WordLibrary() {
     const normalizedQuery = search.trim().toLowerCase()
 
     return allWords.filter((item) => {
+      const status = wordStatsMap[item.key]?.status ?? 'new'
+
       if (sectionFilter !== 'all' && item.section !== sectionFilter) {
+        return false
+      }
+
+      if (statusFilter !== 'all' && status !== statusFilter) {
         return false
       }
 
@@ -70,7 +79,24 @@ export function WordLibrary() {
         item.section.toLowerCase().includes(normalizedQuery)
       )
     })
-  }, [allWords, favouriteKeys, search, sectionFilter, showOnlyFavourites])
+  }, [allWords, favouriteKeys, search, sectionFilter, showOnlyFavourites, statusFilter, wordStatsMap])
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<WordStatus, number> = {
+      new: 0,
+      learning: 0,
+      weak: 0,
+      strong: 0,
+      mastered: 0,
+    }
+
+    allWords.forEach((item) => {
+      const status = wordStatsMap[item.key]?.status ?? 'new'
+      counts[status] += 1
+    })
+
+    return counts
+  }, [allWords, wordStatsMap])
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -98,7 +124,7 @@ export function WordLibrary() {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr,220px,auto]">
+      <div className="mb-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr,200px,180px,auto]">
         <input
           type="text"
           value={search}
@@ -120,6 +146,19 @@ export function WordLibrary() {
           ))}
         </select>
 
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value as 'all' | WordStatus)}
+          className="rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-800 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-300"
+        >
+          <option value="all">All statuses</option>
+          <option value="new">New</option>
+          <option value="learning">Learning</option>
+          <option value="weak">Weak</option>
+          <option value="strong">Strong</option>
+          <option value="mastered">Mastered</option>
+        </select>
+
         <button
           type="button"
           onClick={() => setShowOnlyFavourites((current) => !current)}
@@ -136,6 +175,10 @@ export function WordLibrary() {
       <div className="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
         <p>Total words: {allWords.length}</p>
         <p>Filtered words: {filteredWords.length}</p>
+        <p>
+          New: {statusCounts.new} | Learning: {statusCounts.learning} | Weak: {statusCounts.weak} | Strong:{' '}
+          {statusCounts.strong} | Mastered: {statusCounts.mastered}
+        </p>
         <p>Favourites: {favouriteKeys.size}</p>
         <p>Weak words tracked: {weakKeys.size}</p>
       </div>
@@ -147,6 +190,7 @@ export function WordLibrary() {
               <tr>
                 <th className="px-3 py-2">Section</th>
                 <th className="px-3 py-2">Word</th>
+                <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Favourite</th>
                 <th className="px-3 py-2">Weak</th>
                 <th className="px-3 py-2">Actions</th>
@@ -156,11 +200,17 @@ export function WordLibrary() {
               {filteredWords.map((item) => {
                 const isFavourite = favouriteKeys.has(item.key)
                 const isWeak = weakKeys.has(item.key)
+                const status = wordStatsMap[item.key]?.status ?? 'new'
 
                 return (
                   <tr key={item.key} className="border-t border-slate-200">
                     <td className="px-3 py-2">{item.section}</td>
                     <td className="px-3 py-2 font-semibold text-slate-900">{item.word}</td>
+                    <td className="px-3 py-2">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClassName(status)}`}>
+                        {statusLabel(status)}
+                      </span>
+                    </td>
                     <td className="px-3 py-2">{isFavourite ? 'Yes' : 'No'}</td>
                     <td className="px-3 py-2">{isWeak ? 'Yes' : 'No'}</td>
                     <td className="px-3 py-2">
@@ -184,6 +234,7 @@ export function WordLibrary() {
                           onClick={() => {
                             toggleFavouriteWord(item.section, item.word)
                             setFavouriteKeys(new Set(getFavouriteWords().map((entry) => entry.key)))
+                            setWordStatsMap(getWordStatsMap())
                           }}
                           className={`rounded-md px-2 py-1 text-xs font-semibold transition ${
                             isFavourite
@@ -200,6 +251,7 @@ export function WordLibrary() {
                             onClick={() => {
                               removeWeakWord(item.section, item.word)
                               setWeakKeys(new Set(getWeakWords().map((entry) => entry.key)))
+                              setWordStatsMap(getWordStatsMap())
                             }}
                             className="rounded-md bg-rose-100 px-2 py-1 text-xs font-semibold text-rose-800 transition hover:bg-rose-200"
                           >
@@ -211,6 +263,7 @@ export function WordLibrary() {
                             onClick={() => {
                               addWeakWordManually(item.section, item.word)
                               setWeakKeys(new Set(getWeakWords().map((entry) => entry.key)))
+                              setWordStatsMap(getWordStatsMap())
                             }}
                             className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-200"
                           >
@@ -228,4 +281,18 @@ export function WordLibrary() {
       </div>
     </main>
   )
+}
+
+function statusLabel(status: WordStatus): string {
+  return status.slice(0, 1).toUpperCase() + status.slice(1)
+}
+
+function statusBadgeClassName(status: WordStatus): string {
+  return {
+    new: 'bg-slate-100 text-slate-700',
+    learning: 'bg-cyan-100 text-cyan-800',
+    weak: 'bg-rose-100 text-rose-800',
+    strong: 'bg-emerald-100 text-emerald-800',
+    mastered: 'bg-indigo-100 text-indigo-800',
+  }[status]
 }

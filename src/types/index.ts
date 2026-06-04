@@ -50,6 +50,8 @@ export interface WeakWordRecord {
   updatedAt: string
 }
 
+export type WordStatus = 'new' | 'learning' | 'weak' | 'strong' | 'mastered'
+
 export interface FavouriteWordRecord {
   key: string
   section: string
@@ -61,11 +63,15 @@ export interface WordStatRecord {
   key: string
   section: string
   word: string
-  attempts: number
+  practiceCount: number
   correctCount: number
   wrongCount: number
   timeoutCount: number
+  currentCorrectStreak: number
+  bestCorrectStreak: number
+  averageResponseTime: number
   lastPracticedAt: string
+  status: WordStatus
 }
 
 export interface UserProfile {
