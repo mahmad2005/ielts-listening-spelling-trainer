@@ -173,7 +173,7 @@
       "Assessment",
       "Library",
       "Department",
-      "computer center",
+      "computer centre",
       "Classroom",
       "Attendance",
       "Deadline",
@@ -219,7 +219,7 @@
       "Pupils",
       "Pencil",
       "Supervisor",
-      "bachelor's degree",
+      "bachelor’s degree",
       "Compound",
       "Foreign students",
       "Schedule",
@@ -227,7 +227,7 @@
       "Student support services",
       "Student retention",
       "Publication",
-      "Registrar's office",
+      "Registrar’s office",
       "Stationery"
     ]
   },
@@ -298,7 +298,7 @@
       "Beans",
       "Milk",
       "Cheese",
-      "Yogurt",
+      "Yoghurt",
       "Fruit",
       "Vegetables",
       "Citrus fruits",
@@ -350,8 +350,7 @@
       "Jungle",
       "Oasis",
       "Dam",
-      "Canyon",
-      "Tornado"
+      "Canyon"
     ]
   },
   {
@@ -398,7 +397,7 @@
   {
     "section": "Marketing",
     "words": [
-      "Catalog",
+      "Catalogue",
       "Interview",
       "Research method",
       "Entertainment industry",
@@ -487,7 +486,7 @@
       "Cities",
       "Street",
       "Lane",
-      "City center",
+      "City centre",
       "Car park",
       "Department store",
       "Bridge",
@@ -571,7 +570,7 @@
       "Cottage",
       "Restaurant",
       "Bookshop",
-      "Sports center",
+      "Sports centre",
       "City council",
       "Canteen",
       "Cafe",
@@ -588,7 +587,7 @@
       "Debit",
       "Low-risk investment",
       "Credit card",
-      "Check",
+      "Cheque",
       "Annual fee",
       "Monthly membership",
       "Tuition fees",
@@ -613,7 +612,7 @@
       "Partial refund",
       "Annuity",
       "Public money",
-      "Taxpayers' money",
+      "Taxpayers’ money",
       "Income",
       "Non-refundable",
       "MasterCard",
@@ -639,7 +638,7 @@
       "Luxurious",
       "Safe",
       "Strongly recommended",
-      "Colored",
+      "Coloured",
       "Spotted",
       "Striped"
     ]
@@ -838,22 +837,6 @@
     ]
   },
   {
-    "section": "Colors",
-    "words": [
-      "Blue",
-      "White",
-      "Orange",
-      "Green",
-      "Gray",
-      "Black",
-      "Red",
-      "Yellow",
-      "Purple",
-      "Brown",
-      "Pink"
-    ]
-  },
-  {
     "section": "Equipment and Tools",
     "words": [
       "Helmet",
@@ -887,7 +870,7 @@
       "Carnival",
       "Exhibition",
       "Classical music",
-      "Theater",
+      "Theatre",
       "Cinemas",
       "Art gallery",
       "Museum",
@@ -924,25 +907,6 @@
       "Family",
       "Livestock",
       "Creature"
-    ]
-  },
-  {
-    "section": "Plants",
-    "words": [
-      "Mushroom",
-      "Fungus",
-      "Leaves",
-      "Seed",
-      "Core",
-      "Bark",
-      "Trunk",
-      "Twig",
-      "Branch",
-      "Flower",
-      "Stem",
-      "Roots",
-      "Cluster",
-      "Fertilizer"
     ]
   },
   {
@@ -1020,8 +984,7 @@
       "Composite",
       "Fiberglass",
       "Gold",
-      "Feather",
-      "Wood"
+      "Feather"
     ]
   },
   {
@@ -1093,9 +1056,7 @@
       "Robot",
       "Proficiency",
       "Evolution",
-      "Revolution",
-      "Frequently updated",
-      "Videos"
+      "Revolution"
     ]
   }
 ]
